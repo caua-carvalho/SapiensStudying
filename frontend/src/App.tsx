@@ -50,6 +50,9 @@ export default function App() {
       try {
         console.log("Inicio do try de carregamento de planos");
         const dbPlans = await fetchAllPlansFromDB();
+
+        console.log("Planos carregados do banco de dados:", dbPlans);
+        
         setPlans(dbPlans);
 
         const hash = window.location.hash;
