@@ -48,6 +48,7 @@ export default function App() {
     async function loadDatabasePlans() {
       setInitialLoading(true);
       try {
+        console.log("Inicio do try de carregamento de planos");
         const dbPlans = await fetchAllPlansFromDB();
         setPlans(dbPlans);
 
@@ -65,6 +66,8 @@ export default function App() {
         } else if (dbPlans.length > 0) {
           setSelectedPlanId(dbPlans[0].id);
         }
+
+        console.log("Fim do try de carregamento de planos");
       } catch (err) {
         console.error('Erro ao carregar dados do banco:', err);
       } finally {
