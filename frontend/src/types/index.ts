@@ -62,6 +62,7 @@ export interface FullStudyPlan {
     id: string;
     dayText: string;
     title: string;
+    description: string;
     duration: string;
     typeText: string;
     completed: boolean;
