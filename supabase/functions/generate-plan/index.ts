@@ -152,7 +152,7 @@ Retorne APENAS um objeto JSON com esta estrutura exata:
     {
       "dia": 1,
       "topico": "Título claro do dia",
-      "descricao": "Explicação dos conceitos e meta prática do dia"
+      "descricao": "Descrição detalhada e específica do que o aluno deve estudar e aprender neste dia, com aproximadamente 80 a 120 palavras. Informe exatamente quais conceitos, tópicos e subtemas devem ser estudados, quais conhecimentos o aluno deve compreender ao final e, quando aplicável, qual habilidade prática deve conseguir executar. Evite descrições genéricas, motivacionais ou vagas como 'estude os conceitos principais' ou 'pratique o conteúdo'. Delimite claramente o escopo do estudo para aquele dia, priorizando os conhecimentos essenciais e indicando o resultado esperado da aprendizagem. A descrição deve funcionar como um guia de estudo diário que permita ao aluno saber exatamente o que pesquisar, estudar e praticar sem depender de outra explicação."
     }
   ],
   "livros": [
