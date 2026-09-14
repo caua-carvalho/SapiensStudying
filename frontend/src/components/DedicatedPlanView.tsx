@@ -30,6 +30,13 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
   >('livros');
   const [copiedLink, setCopiedLink] = useState(false);
   const [quickAiQuestion, setQuickAiQuestion] = useState('');
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+
+  const handleToggleExpand = (taskId: string) => {
+    setExpandedTaskId((current) =>
+      current === taskId ? null : taskId
+    );
+  };
 
   const handleShare = () => {
     navigator.clipboard?.writeText(window.location.href);
@@ -247,103 +254,175 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
                 </div>
 
                 {/* Lista de Dias da Semana Ativa */}
-                <div className="flex flex-col gap-2.5" id={`week${currentWeekData.weekNumber}-days`}>
+                <div
+                  className="flex flex-col gap-2.5"
+                  id={`week${currentWeekData.weekNumber}-days`}
+                >
                   {currentWeekData.activities.map((act) => {
                     const taskMeta = getTaskIcon(act.type);
                     const isTodayHighlight = act.isToday && !act.completed;
+                    const isExpanded = expandedTaskId === act.id;
 
                     if (isTodayHighlight) {
                       return (
                         <div
                           key={act.id}
-                          className="flex items-center justify-between gap-4 p-4 rounded-xl bg-secondary-container text-on-secondary-container shadow-sm"
+                          className="flex flex-col p-4 rounded-xl bg-secondary-container text-on-secondary-container shadow-sm"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <input
-                              type="checkbox"
-                              id="check-day-active"
-                              checked={act.completed}
-                              onChange={() => onToggleTask(act.id)}
-                              className="w-5 h-5 rounded accent-primary text-primary focus:ring-0 focus:outline-none cursor-pointer"
-                            />
-                            <div className="flex flex-col min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-on-surface truncate">
-                                  {act.title}
-                                </span>
-                                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-tertiary text-on-tertiary uppercase tracking-wider">
-                                  Hoje
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-on-surface-variant mt-0.5">
-                                <span className="inline-flex items-center gap-1">
-                                  <span className="material-symbols-outlined text-[14px]">
-                                    {taskMeta.icon}
+                          <div
+                            className="flex items-center justify-between gap-4 cursor-pointer"
+                            onClick={() => handleToggleExpand(act.id)}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <input
+                                type="checkbox"
+                                id={`check-day-active-${act.id}`}
+                                checked={act.completed}
+                                onChange={() => onToggleTask(act.id)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-5 h-5 rounded accent-primary text-primary focus:ring-0 focus:outline-none cursor-pointer"
+                              />
+
+                              <div className="flex flex-col min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-on-surface truncate">
+                                    {act.title}
                                   </span>
-                                  <span>{taskMeta.label}</span>
-                                </span>
-                                <span>•</span>
-                                <span className="font-mono">{act.duration}</span>
+
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-tertiary text-on-tertiary uppercase tracking-wider">
+                                    Hoje
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-2 text-xs text-on-surface-variant mt-0.5">
+                                  <span className="inline-flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[14px]">
+                                      {taskMeta.icon}
+                                    </span>
+                                    <span>{taskMeta.label}</span>
+                                  </span>
+
+                                  <span>•</span>
+
+                                  <span className="font-mono">
+                                    {act.duration}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleTask(act.id);
+                              }}
+                              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:bg-primary/90 transition-all shadow-sm"
+                              type="button"
+                            >
+                              <span>Concluir</span>
+                              <span className="material-symbols-outlined text-[14px]">
+                                check
+                              </span>
+                            </button>
+                          </div>
+
+                          {/* Descrição expandida */}
+                          <div
+                            className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                              }`}
+                          >
+                            <div className="overflow-hidden">
+                              <div className="mt-3 pt-3 border-t border-on-secondary-container/10">
+                                <p
+                                  className={`text-xs leading-relaxed text-on-secondary-container transition-opacity duration-200 ${isExpanded ? 'opacity-100' : 'opacity-0'
+                                    }`}
+                                >
+                                  {act.description}
+                                </p>
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={() => onToggleTask(act.id)}
-                            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:bg-primary/90 transition-all shadow-sm"
-                            type="button"
-                          >
-                            <span>Concluir</span>
-                            <span className="material-symbols-outlined text-[14px]">check</span>
-                          </button>
                         </div>
                       );
                     }
 
                     return (
-                      <label
+                      <div
                         key={act.id}
-                        className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer group select-none"
+                        className="flex flex-col p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors group select-none"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={act.completed}
-                            onChange={() => onToggleTask(act.id)}
-                            className="w-5 h-5 rounded accent-primary text-primary focus:ring-0 focus:outline-none cursor-pointer"
-                          />
-                          <div className="flex flex-col min-w-0">
-                            <span
-                              className={`text-sm font-semibold truncate transition-colors ${
-                                act.completed
+                        <div
+                          className="flex items-center justify-between gap-4 cursor-pointer"
+                          onClick={() => handleToggleExpand(act.id)}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={act.completed}
+                              onChange={() => onToggleTask(act.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-5 h-5 rounded accent-primary text-primary focus:ring-0 focus:outline-none cursor-pointer"
+                            />
+
+                            <div className="flex flex-col min-w-0">
+                              <span
+                                className={`text-sm font-semibold truncate transition-colors ${act.completed
                                   ? 'text-on-surface-variant line-through group-hover:text-on-surface'
                                   : 'text-on-surface group-hover:text-primary'
-                              }`}
-                            >
-                              {act.title}
-                            </span>
-                            <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                              <span className="inline-flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[14px]">
-                                  {taskMeta.icon}
-                                </span>
-                                <span>{taskMeta.label}</span>
+                                  }`}
+                              >
+                                {act.title}
                               </span>
-                              <span>•</span>
-                              <span className="font-mono">{act.duration}</span>
+
+                              <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                                <span className="inline-flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[14px]">
+                                    {taskMeta.icon}
+                                  </span>
+
+                                  <span>{taskMeta.label}</span>
+                                </span>
+
+                                <span>•</span>
+
+                                <span className="font-mono">
+                                  {act.duration}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {act.completed ? (
+                            <span className="shrink-0 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-primary-fixed text-on-primary-fixed">
+                              Concluído
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-xs text-on-surface-variant font-medium">
+                              {act.dayNumber > (plan.todayTask ? 4 : 2)
+                                ? 'Amanhã'
+                                : 'Pendente'}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Descrição expandida */}
+                        <div
+                          className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                            }`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="overflow-hidden">
+                            <div className="mt-3 pt-3 border-t border-outline-variant/30">
+                              <p
+                                className={`text-xs leading-relaxed text-on-surface-variant select-text cursor-text transition-opacity duration-200 ${isExpanded ? 'opacity-100' : 'opacity-0'
+                                  }`}
+                              >
+                                {act.description}
+                              </p>
                             </div>
                           </div>
                         </div>
-
-                        {act.completed ? (
-                          <span className="shrink-0 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-primary-fixed text-on-primary-fixed">
-                            Concluído
-                          </span>
-                        ) : (
-                          <span className="shrink-0 text-xs text-on-surface-variant font-medium">
-                            {act.dayNumber > (plan.todayTask ? 4 : 2) ? 'Amanhã' : 'Pendente'}
-                          </span>
-                        )}
-                      </label>
+                      </div>
                     );
                   })}
                 </div>
@@ -403,55 +482,50 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
             <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold no-scrollbar">
               <button
                 onClick={() => setSelectedResourceCategory('livros')}
-                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap shadow-sm transition-all ${
-                  selectedResourceCategory === 'livros'
-                    ? 'bg-primary text-on-primary'
-                    : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
-                }`}
+                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap shadow-sm transition-all ${selectedResourceCategory === 'livros'
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
+                  }`}
                 type="button"
               >
                 Livros
               </button>
               <button
                 onClick={() => setSelectedResourceCategory('filmes')}
-                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors ${
-                  selectedResourceCategory === 'filmes'
-                    ? 'bg-primary text-on-primary'
-                    : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
-                }`}
+                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors ${selectedResourceCategory === 'filmes'
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
+                  }`}
                 type="button"
               >
                 Filmes & Documentários
               </button>
               <button
                 onClick={() => setSelectedResourceCategory('cursos')}
-                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors ${
-                  selectedResourceCategory === 'cursos'
-                    ? 'bg-primary text-on-primary'
-                    : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
-                }`}
+                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors ${selectedResourceCategory === 'cursos'
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
+                  }`}
                 type="button"
               >
                 Cursos Online
               </button>
               <button
                 onClick={() => setSelectedResourceCategory('podcasts')}
-                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors ${
-                  selectedResourceCategory === 'podcasts'
-                    ? 'bg-primary text-on-primary'
-                    : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
-                }`}
+                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors ${selectedResourceCategory === 'podcasts'
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
+                  }`}
                 type="button"
               >
                 Podcasts
               </button>
               <button
                 onClick={() => setSelectedResourceCategory('artigos')}
-                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors ${
-                  selectedResourceCategory === 'artigos'
-                    ? 'bg-primary text-on-primary'
-                    : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
-                }`}
+                className={`px-3.5 py-1.5 rounded-full whitespace-nowrap transition-colors ${selectedResourceCategory === 'artigos'
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
+                  }`}
                 type="button"
               >
                 Artigos Científicos
@@ -474,13 +548,12 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
                           src={rec.imageUrl}
                         />
                         <span
-                          className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold shadow ${
-                            rec.badgeColor === 'secondary'
-                              ? 'bg-secondary text-on-secondary'
-                              : rec.badgeColor === 'tertiary'
+                          className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-bold shadow ${rec.badgeColor === 'secondary'
+                            ? 'bg-secondary text-on-secondary'
+                            : rec.badgeColor === 'tertiary'
                               ? 'bg-tertiary text-on-tertiary'
                               : 'bg-primary text-on-primary'
-                          }`}
+                            }`}
                         >
                           {rec.badge || 'Recomendado'}
                         </span>
@@ -760,9 +833,8 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
                   />
                   <label
                     htmlFor="aside-day-task"
-                    className={`text-xs font-semibold leading-snug cursor-pointer transition-colors ${
-                      plan.todayTask.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'
-                    }`}
+                    className={`text-xs font-semibold leading-snug cursor-pointer transition-colors ${plan.todayTask.completed ? 'line-through text-on-surface-variant' : 'text-on-surface'
+                      }`}
                   >
                     {plan.todayTask.title}
                   </label>
@@ -779,11 +851,10 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
 
               <button
                 onClick={() => onToggleTask(plan.todayTask!.id)}
-                className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 ${
-                  plan.todayTask.completed
-                    ? 'bg-surface-container-highest text-on-surface'
-                    : 'bg-primary text-on-primary hover:bg-primary/90'
-                }`}
+                className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 ${plan.todayTask.completed
+                  ? 'bg-surface-container-highest text-on-surface'
+                  : 'bg-primary text-on-primary hover:bg-primary/90'
+                  }`}
                 type="button"
               >
                 <span className="material-symbols-outlined text-sm">
@@ -811,13 +882,12 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
                 <div key={d} className="flex flex-col items-center gap-1">
                   <span className="text-[10px] text-on-surface-variant font-medium">{d}</span>
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                      i < 4
-                        ? 'bg-primary text-on-primary'
-                        : i === 4
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${i < 4
+                      ? 'bg-primary text-on-primary'
+                      : i === 4
                         ? 'border-2 border-dashed border-primary/50 text-primary'
                         : 'bg-surface-container-high text-on-surface-variant'
-                    }`}
+                      }`}
                   >
                     {i < 4 ? '✓' : ''}
                   </div>
