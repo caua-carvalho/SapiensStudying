@@ -24,7 +24,7 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
   onOpenFeynman,
   onArchivePlan,
 }) => {
-  const [activeWeekNum, setActiveWeekNum] = useState<number>(plan.currentWeek || 1);
+  const [activeWeekNum, setActiveWeekNum] = useState<number | null>(plan.currentWeek || 1);
   const [selectedResourceCategory, setSelectedResourceCategory] = useState<
     'livros' | 'filmes' | 'cursos' | 'podcasts' | 'artigos'
   >('livros');
@@ -50,8 +50,6 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
     onOpenAiChat(plan);
     setQuickAiQuestion('');
   };
-
-  const currentWeekData = plan.weeks.find((w) => w.weekNumber === activeWeekNum) || plan.weeks[0];
 
   const filteredResources = plan.resources.filter((r) => r.category === selectedResourceCategory);
   // Fallback if none in specific category to show other resources
@@ -224,244 +222,289 @@ export const DedicatedPlanView: React.FC<DedicatedPlanViewProps> = ({
               </span>
             </div>
 
-            {/* Semana Ativa & Expandida */}
-            {currentWeekData && (
-              <div className="bg-surface-container-lowest rounded-xl p-5 sm:p-6 shadow-sm flex flex-col gap-5">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-surface-container-high">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-primary-fixed text-on-primary-fixed font-bold flex items-center justify-center font-headline text-lg">
-                      {currentWeekData.weekNumber}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-headline font-bold text-base sm:text-lg text-on-surface">
-                          {currentWeekData.title}
-                        </h3>
-                        {currentWeekData.weekNumber === plan.currentWeek && (
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            Atual
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-on-surface-variant mt-0.5">
-                        {currentWeekData.description}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-xs text-on-surface-variant sm:text-right font-mono shrink-0 pl-12 sm:pl-0">
-                    {currentWeekData.progressPercent || 0}% desta semana
-                  </div>
-                </div>
-
-                {/* Lista de Dias da Semana Ativa */}
-                <div
-                  className="flex flex-col gap-2.5"
-                  id={`week${currentWeekData.weekNumber}-days`}
-                >
-                  {currentWeekData.activities.map((act) => {
-                    const taskMeta = getTaskIcon(act.type);
-                    const isTodayHighlight = act.isToday && !act.completed;
-                    const isExpanded = expandedTaskId === act.id;
-
-                    if (isTodayHighlight) {
-                      return (
-                        <div
-                          key={act.id}
-                          className="flex flex-col p-4 rounded-xl bg-secondary-container text-on-secondary-container shadow-sm"
-                        >
-                          <div
-                            className="flex items-center justify-between gap-4 cursor-pointer"
-                            onClick={() => handleToggleExpand(act.id)}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <input
-                                type="checkbox"
-                                id={`check-day-active-${act.id}`}
-                                checked={act.completed}
-                                onChange={() => onToggleTask(act.id)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-5 h-5 rounded accent-primary text-primary focus:ring-0 focus:outline-none cursor-pointer"
-                              />
-
-                              <div className="flex flex-col min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-bold text-on-surface truncate">
-                                    {act.title}
-                                  </span>
-
-                                  <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-tertiary text-on-tertiary uppercase tracking-wider">
-                                    Hoje
-                                  </span>
-                                </div>
-
-                                <div className="flex items-center gap-2 text-xs text-on-surface-variant mt-0.5">
-                                  <span className="inline-flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[14px]">
-                                      {taskMeta.icon}
-                                    </span>
-                                    <span>{taskMeta.label}</span>
-                                  </span>
-
-                                  <span>•</span>
-
-                                  <span className="font-mono">
-                                    {act.duration}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onToggleTask(act.id);
-                              }}
-                              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:bg-primary/90 transition-all shadow-sm"
-                              type="button"
-                            >
-                              <span>Concluir</span>
-                              <span className="material-symbols-outlined text-[14px]">
-                                check
-                              </span>
-                            </button>
-                          </div>
-
-                          {/* Descrição expandida */}
-                          <div
-                            className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                              }`}
-                          >
-                            <div className="overflow-hidden">
-                              <div className="mt-3 pt-3 border-t border-on-secondary-container/10">
-                                <p
-                                  className={`text-xs leading-relaxed text-on-secondary-container transition-opacity duration-200 ${isExpanded ? 'opacity-100' : 'opacity-0'
-                                    }`}
-                                >
-                                  {act.description}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div
-                        key={act.id}
-                        className="flex flex-col p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors group select-none"
-                      >
-                        <div
-                          className="flex items-center justify-between gap-4 cursor-pointer"
-                          onClick={() => handleToggleExpand(act.id)}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <input
-                              type="checkbox"
-                              checked={act.completed}
-                              onChange={() => onToggleTask(act.id)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-5 h-5 rounded accent-primary text-primary focus:ring-0 focus:outline-none cursor-pointer"
-                            />
-
-                            <div className="flex flex-col min-w-0">
-                              <span
-                                className={`text-sm font-semibold truncate transition-colors ${act.completed
-                                  ? 'text-on-surface-variant line-through group-hover:text-on-surface'
-                                  : 'text-on-surface group-hover:text-primary'
-                                  }`}
-                              >
-                                {act.title}
-                              </span>
-
-                              <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                                <span className="inline-flex items-center gap-1">
-                                  <span className="material-symbols-outlined text-[14px]">
-                                    {taskMeta.icon}
-                                  </span>
-
-                                  <span>{taskMeta.label}</span>
-                                </span>
-
-                                <span>•</span>
-
-                                <span className="font-mono">
-                                  {act.duration}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {act.completed ? (
-                            <span className="shrink-0 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-primary-fixed text-on-primary-fixed">
-                              Concluído
-                            </span>
-                          ) : (
-                            <span className="shrink-0 text-xs text-on-surface-variant font-medium">
-                              {act.dayNumber > (plan.todayTask ? 4 : 2)
-                                ? 'Amanhã'
-                                : 'Pendente'}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Descrição expandida */}
-                        <div
-                          className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-                            }`}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="overflow-hidden">
-                            <div className="mt-3 pt-3 border-t border-outline-variant/30">
-                              <p
-                                className={`text-xs leading-relaxed text-on-surface-variant select-text cursor-text transition-opacity duration-200 ${isExpanded ? 'opacity-100' : 'opacity-0'
-                                  }`}
-                              >
-                                {act.description}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Outras Semanas (Accordion / Seletor interativo) */}
+            {/* Semanas */}
             <div className="space-y-3">
               {plan.weeks
-                .filter((w) => w.weekNumber !== activeWeekNum)
-                .map((week) => (
-                  <div
-                    key={week.weekNumber}
-                    onClick={() => setActiveWeekNum(week.weekNumber)}
-                    className="bg-surface-container-low hover:bg-surface-container rounded-xl p-4 transition-all flex items-center justify-between cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-surface-container-high text-on-surface-variant flex items-center justify-center font-headline font-bold text-sm group-hover:bg-primary-fixed group-hover:text-on-primary-fixed transition-colors">
-                        {week.weekNumber}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="font-headline font-semibold text-sm sm:text-base text-on-surface group-hover:text-primary transition-colors truncate">
-                          {week.title}
-                        </h4>
-                        <p className="text-xs text-on-surface-variant truncate">
-                          {week.description}
-                        </p>
+                .sort((a, b) => {
+                  if (a.weekNumber === null) return 1;
+                  if (b.weekNumber === null) return -1;
+
+                  return a.weekNumber - b.weekNumber;
+                })
+                .map((week) => {
+                  const isExpanded = week.weekNumber === activeWeekNum;
+
+                  return (
+                    <div
+                      key={week.weekNumber}
+                      className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm"
+                    >
+                      {/* Cabeçalho da semana */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveWeekNum((current) =>
+                            current === week.weekNumber ? null : week.weekNumber
+                          )
+                        }
+                        className="w-full flex items-center justify-between gap-4 p-4 text-left hover:bg-surface-container-low transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center font-headline font-bold text-sm shrink-0 transition-colors ${isExpanded
+                              ? 'bg-primary-fixed text-on-primary-fixed'
+                              : 'bg-surface-container-high text-on-surface-variant'
+                              }`}
+                          >
+                            {week.weekNumber}
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-headline font-semibold text-sm sm:text-base text-on-surface truncate">
+                                {week.title}
+                              </h3>
+
+                              {week.weekNumber === plan.currentWeek && (
+                                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+                                  Atual
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-xs text-on-surface-variant truncate">
+                              {week.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs text-on-surface-variant font-mono hidden sm:inline">
+                            {week.activities.length} atividades ({week.progressPercent || 0}%)
+                          </span>
+
+                          <span
+                            className={`material-symbols-outlined text-on-surface-variant text-lg transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''
+                              }`}
+                          >
+                            expand_more
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Conteúdo expandido */}
+                      <div
+                        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isExpanded
+                          ? 'grid-rows-[1fr]'
+                          : 'grid-rows-[0fr]'
+                          }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+                            <div className="border-t border-surface-container-high pt-4">
+                              <div className="flex flex-col gap-2.5">
+                                {week.activities.map((act) => {
+                                  const taskMeta = getTaskIcon(act.type);
+                                  const isTodayHighlight =
+                                    act.isToday && !act.completed;
+
+                                  const isTaskExpanded =
+                                    expandedTaskId === act.id;
+
+                                  if (isTodayHighlight) {
+                                    return (
+                                      <div
+                                        key={act.id}
+                                        className="flex flex-col p-4 rounded-xl bg-secondary-container text-on-secondary-container shadow-sm"
+                                      >
+                                        <div
+                                          className="flex items-center justify-between gap-4 cursor-pointer"
+                                          onClick={() =>
+                                            handleToggleExpand(act.id)
+                                          }
+                                        >
+                                          <div className="flex items-center gap-3 min-w-0">
+                                            <input
+                                              type="checkbox"
+                                              id={`check-day-${act.id}`}
+                                              checked={act.completed}
+                                              onChange={() =>
+                                                onToggleTask(act.id)
+                                              }
+                                              onClick={(e) =>
+                                                e.stopPropagation()
+                                              }
+                                              className="w-5 h-5 rounded accent-primary text-primary focus:ring-0 focus:outline-none cursor-pointer"
+                                            />
+
+                                            <div className="flex flex-col min-w-0">
+                                              <div className="flex items-center gap-2">
+                                                <span className="text-sm font-bold text-on-surface truncate">
+                                                  {act.title}
+                                                </span>
+
+                                                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-tertiary text-on-tertiary uppercase tracking-wider">
+                                                  Hoje
+                                                </span>
+                                              </div>
+
+                                              <div className="flex items-center gap-2 text-xs text-on-surface-variant mt-0.5">
+                                                <span className="inline-flex items-center gap-1">
+                                                  <span className="material-symbols-outlined text-[14px]">
+                                                    {taskMeta.icon}
+                                                  </span>
+                                                  <span>{taskMeta.label}</span>
+                                                </span>
+
+                                                <span>•</span>
+
+                                                <span className="font-mono">
+                                                  {act.duration}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onToggleTask(act.id);
+                                            }}
+                                            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-on-primary text-xs font-semibold hover:bg-primary/90 transition-all shadow-sm"
+                                          >
+                                            <span>Concluir</span>
+
+                                            <span className="material-symbols-outlined text-[14px]">
+                                              check
+                                            </span>
+                                          </button>
+                                        </div>
+
+                                        <div
+                                          className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isTaskExpanded
+                                            ? 'grid-rows-[1fr]'
+                                            : 'grid-rows-[0fr]'
+                                            }`}
+                                        >
+                                          <div className="overflow-hidden">
+                                            <div className="mt-3 pt-3 border-t border-on-secondary-container/10">
+                                              <p
+                                                className={`text-xs leading-relaxed text-on-secondary-container transition-opacity duration-200 ${isTaskExpanded
+                                                  ? 'opacity-100'
+                                                  : 'opacity-0'
+                                                  }`}
+                                              >
+                                                {act.description}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <div
+                                      key={act.id}
+                                      className="flex flex-col p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors group select-none"
+                                    >
+                                      <div
+                                        className="flex items-center justify-between gap-4 cursor-pointer"
+                                        onClick={() =>
+                                          handleToggleExpand(act.id)
+                                        }
+                                      >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                          <input
+                                            type="checkbox"
+                                            checked={act.completed}
+                                            onChange={() =>
+                                              onToggleTask(act.id)
+                                            }
+                                            onClick={(e) =>
+                                              e.stopPropagation()
+                                            }
+                                            className="w-5 h-5 rounded accent-primary text-primary focus:ring-0 focus:outline-none cursor-pointer"
+                                          />
+
+                                          <div className="flex flex-col min-w-0">
+                                            <span
+                                              className={`text-sm font-semibold truncate transition-colors ${act.completed
+                                                ? 'text-on-surface-variant line-through group-hover:text-on-surface'
+                                                : 'text-on-surface group-hover:text-primary'
+                                                }`}
+                                            >
+                                              {act.title}
+                                            </span>
+
+                                            <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+                                              <span className="inline-flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">
+                                                  {taskMeta.icon}
+                                                </span>
+
+                                                <span>
+                                                  {taskMeta.label}
+                                                </span>
+                                              </span>
+
+                                              <span>•</span>
+
+                                              <span className="font-mono">
+                                                {act.duration}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {act.completed ? (
+                                          <span className="shrink-0 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-primary-fixed text-on-primary-fixed">
+                                            Concluído
+                                          </span>
+                                        ) : (
+                                          <span className="shrink-0 text-xs text-on-surface-variant font-medium">
+                                            {act.dayNumber >
+                                              (plan.todayTask ? 4 : 2)
+                                              ? 'Amanhã'
+                                              : 'Pendente'}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div
+                                        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isTaskExpanded
+                                          ? 'grid-rows-[1fr]'
+                                          : 'grid-rows-[0fr]'
+                                          }`}
+                                        onClick={(e) =>
+                                          e.stopPropagation()
+                                        }
+                                      >
+                                        <div className="overflow-hidden">
+                                          <div className="mt-3 pt-3 border-t border-outline-variant/30">
+                                            <p
+                                              className={`text-xs leading-relaxed text-on-surface-variant select-text cursor-text transition-opacity duration-200 ${isTaskExpanded
+                                                ? 'opacity-100'
+                                                : 'opacity-0'
+                                                }`}
+                                            >
+                                              {act.description}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-on-surface-variant font-mono hidden sm:inline">
-                        {week.activities.length} atividades ({week.progressPercent || 0}%)
-                      </span>
-                      <span className="material-symbols-outlined text-on-surface-variant text-lg">
-                        expand_more
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </section>
 

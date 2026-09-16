@@ -10,7 +10,7 @@ export interface TaskActivity {
 }
 
 export interface WeekPlan {
-  weekNumber: number;
+  weekNumber: number | null;
   title: string;
   description: string;
   progressPercent?: number;
